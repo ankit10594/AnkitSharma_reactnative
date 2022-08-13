@@ -9,8 +9,9 @@ import {
 } from 'react-native';
 import React from 'react';
 import {NavigationProp} from '@react-navigation/native';
-import {addProduct} from '../apis/index';
+import {addProduct, getCategory} from '../apis/index';
 import LoadingModal from '../components/LoadingModal';
+import CategoryList from '../components/CategoryList';
 interface AddProductProps {
   navigation: NavigationProp<any, any>;
 }
@@ -24,13 +25,29 @@ export default function AddProduct({navigation}: AddProductProps) {
     developerEmail: 'ankit10594@hotmail.com',
   });
   const [loading, setLoading] = React.useState(false);
+  const [categoryList, setCategoryList] = React.useState([]);
+  const [selectedCategory, setSelectedCategory] = React.useState('');
   const setValue = (key: string, val: string) => {
     setProductData({
       ...productData,
       [key]: val,
     });
   };
-
+  const getCategoryReleatedProduct = (category_id: string) => {
+    setSelectedCategory(category_id);
+    setValue('category', category_id);
+  };
+  React.useEffect(() => {
+    setLoading(true);
+    getCategory()
+      .then(res => {
+        console.log(res.data?.message);
+        if (res.data && res.data?.message === 'Success') {
+          setCategoryList(res.data.categories);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [navigation]);
   const submitData = () => {
     setLoading(true);
     addProduct(productData)
@@ -67,14 +84,7 @@ export default function AddProduct({navigation}: AddProductProps) {
             setValue('price', text);
           }}
         />
-        <TextInput
-          style={styles.textInput}
-          value={productData.category}
-          placeholder="Enter Category"
-          onChangeText={text => {
-            setValue('category', text);
-          }}
-        />
+
         <TextInput
           style={styles.textInput}
           value={productData.description}
@@ -85,10 +95,18 @@ export default function AddProduct({navigation}: AddProductProps) {
         />
         <TextInput
           style={styles.textInput}
-          placeholder="Enter Avatar"
+          placeholder="Enter Image Link"
           value={productData.avatar}
           onChangeText={text => {
             setValue('avatar', text);
+          }}
+        />
+        <Text style={styles.selectCat}>Select Categpry</Text>
+        <CategoryList
+          categoryList={categoryList}
+          selectedCategory={selectedCategory}
+          OnPress={(category_id: string) => {
+            getCategoryReleatedProduct(category_id);
           }}
         />
         <View style={styles.gap} />
@@ -122,5 +140,9 @@ const styles = StyleSheet.create({
   },
   gap: {
     marginTop: 20,
+  },
+  selectCat: {
+    color: 'black',
+    marginTop: 10,
   },
 });
